@@ -21,6 +21,9 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+
+#define ZERO_MEM(a) memset(a, 0, sizeof(a))
 
 #define ARRAY_SIZE_IN_ELEMENTS(a) (sizeof(a)/sizeof(a[0]))
 
@@ -28,7 +31,7 @@
 
 #define SAFE_DELETE(p) if (p) { delete p; p = NULL; }
 
-#define GLCheckError()                                                          \
+#define GLExitIfError()                                                          \
 {                                                                               \
     GLenum Error = glGetError();                                                \
                                                                                 \
@@ -37,6 +40,8 @@
         exit(0);                                                                \
     }                                                                           \
 }
+
+#define GLCheckError() (glGetError() == GL_NO_ERROR)
 
 #endif	/* UTIL_H */
 
