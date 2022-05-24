@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "ogldev_types.h"
+
 #define ZERO_MEM(a) memset(a, 0, sizeof(a))
 
 #define ARRAY_SIZE_IN_ELEMENTS(a) (sizeof(a)/sizeof(a[0]))

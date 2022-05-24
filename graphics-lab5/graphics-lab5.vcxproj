@@ -19,11 +19,26 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+<<<<<<< Updated upstream
     <ClInclude Include="..\billboard_technique.h" />
+=======
+    <ClCompile Include="..\camera.cpp" />
+    <ClCompile Include="..\glut_backend.cpp" />
+    <ClCompile Include="..\main.cpp" />
+    <ClCompile Include="..\math_3d.cpp" />
+    <ClCompile Include="..\mesh.cpp" />
+    <ClCompile Include="..\pipeline.cpp" />
+    <ClCompile Include="..\skinning_technique.cpp" />
+    <ClCompile Include="..\technique.cpp" />
+    <ClCompile Include="..\texture.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+>>>>>>> Stashed changes
     <ClInclude Include="..\callbacks.h" />
     <ClInclude Include="..\camera.h" />
     <ClInclude Include="..\engine_common.h" />
     <ClInclude Include="..\glut_backend.h" />
+<<<<<<< Updated upstream
     <ClInclude Include="..\lighting_technique.h" />
     <ClInclude Include="..\math_3d.h" />
     <ClInclude Include="..\mesh.h" />
@@ -31,10 +46,18 @@
     <ClInclude Include="..\pipeline.h" />
     <ClInclude Include="..\ps_update_technique.h" />
     <ClInclude Include="..\random_texture.h" />
+=======
+    <ClInclude Include="..\math_3d.h" />
+    <ClInclude Include="..\mesh.h" />
+    <ClInclude Include="..\ogldev_types.h" />
+    <ClInclude Include="..\pipeline.h" />
+    <ClInclude Include="..\skinning_technique.h" />
+>>>>>>> Stashed changes
     <ClInclude Include="..\technique.h" />
     <ClInclude Include="..\texture.h" />
     <ClInclude Include="..\util.h" />
   </ItemGroup>
+<<<<<<< Updated upstream
   <ItemGroup>
     <ClCompile Include="..\billboard_technique.cpp" />
     <ClCompile Include="..\camera.cpp" />
@@ -50,6 +73,8 @@
     <ClCompile Include="..\technique.cpp" />
     <ClCompile Include="..\texture.cpp" />
   </ItemGroup>
+=======
+>>>>>>> Stashed changes
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
