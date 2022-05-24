@@ -1,16 +1,29 @@
+/*
+
+	Copyright 2010 Etay Meiri
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifndef MATH_3D_H
 #define	MATH_3D_H
 
 #include <stdio.h>
-#ifdef WIN32
-#define _USE_MATH_DEFINES 
-#include <cmath>
-#else
 #include <math.h>
-#endif
 
-#define ToRadian(x) (float)(((x) * 3.14f / 180.0f))
-#define ToDegree(x) (float)(((x) * 180.0f / 3.14f))
+#define ToRadian(x) ((x) * 3.14f / 180.0f)
+#define ToDegree(x) ((x) * 180.0f / 3.14f)
 
 float RandomFloat();
 
@@ -163,20 +176,6 @@ public:
     Matrix4f()
     {        
     }
-    
-   
-    Matrix4f Transpose() const
-    {
-        Matrix4f n;
-        
-        for (unsigned int i = 0 ; i < 4 ; i++) {
-            for (unsigned int j = 0 ; j < 4 ; j++) {
-                n.m[i][j] = m[j][i];
-            }
-        }
-        
-        return n;
-    }
 
 
     inline void InitIdentity()
@@ -215,7 +214,7 @@ public:
         return r;
     }
     
-    void Print() const
+    void Print()
     {
         for (int i = 0 ; i < 4 ; i++) {
             printf("%f %f %f %f\n", m[i][0], m[i][1], m[i][2], m[i][3]);

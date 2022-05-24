@@ -1,8 +1,8 @@
 #include <stdio.h>
+#include <string.h>
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 
-#include "util.h"
 #include "glut_backend.h"
 
 // Points to the object implementing the ICallbacks interface which was delivered to
@@ -39,12 +39,6 @@ static void IdleCB()
 }
 
 
-static void MouseCB(int Button, int State, int x, int y)
-{
-    s_pCallbacks->MouseCB(Button, State, x, y);
-}
-
-
 static void InitCallbacks()
 {
     glutDisplayFunc(RenderSceneCB);
@@ -52,7 +46,6 @@ static void InitCallbacks()
     glutSpecialFunc(SpecialKeyboardCB);
     glutPassiveMotionFunc(PassiveMouseCB);
     glutKeyboardFunc(KeyboardCB);
-    glutMouseFunc(MouseCB);
 }
 
 
@@ -68,7 +61,7 @@ bool GLUTBackendCreateWindow(unsigned int Width, unsigned int Height, unsigned i
 {
     if (isFullScreen) {
         char ModeString[64] = { 0 };
-        SNPRINTF(ModeString, sizeof(ModeString), "%dx%d@%d", Width, Height, bpp);
+        snprintf(ModeString, sizeof(ModeString), "%dx%d@%d", Width, Height, bpp);
         glutGameModeString(ModeString);
         glutEnterGameMode();
     }
@@ -77,6 +70,7 @@ bool GLUTBackendCreateWindow(unsigned int Width, unsigned int Height, unsigned i
         glutCreateWindow(pTitle);
     }
 
+    glewExperimental=GL_TRUE;
     // Must be done after glut is initialized!
     GLenum res = glewInit();
     if (res != GLEW_OK) {
@@ -84,6 +78,8 @@ bool GLUTBackendCreateWindow(unsigned int Width, unsigned int Height, unsigned i
         return false;
     }
 
+    glutSetCursor(GLUT_CURSOR_NONE);
+     
     return true;
 }
 
@@ -98,8 +94,8 @@ void GLUTBackendRun(ICallbacks* pCallbacks)
     glFrontFace(GL_CW);
     glCullFace(GL_BACK);
     glEnable(GL_CULL_FACE);
-    glEnable(GL_DEPTH_TEST);
-
+    glEnable(GL_DEPTH_TEST);    
+        
     s_pCallbacks = pCallbacks;
     InitCallbacks();
     glutMainLoop();

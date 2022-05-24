@@ -1,6 +1,13 @@
+#include <stdlib.h>
 #include <math.h>
+#include <assert.h>
 #include <GL/glew.h>
 #include <GL/freeglut.h>
+#ifdef __GNUC__
+#  if __GNUC_PREREQ(4,7)
+#include <unistd.h>
+#  endif
+#endif
 
 #include "engine_common.h"
 #include "util.h"
@@ -10,142 +17,149 @@
 #include "lighting_technique.h"
 #include "glut_backend.h"
 #include "mesh.h"
-#ifdef FREETYPE
-#include "freetypeGL.h"
-#endif
+#include "particle_system.h"
 
-#define WINDOW_WIDTH  1280  
-#define WINDOW_HEIGHT 1024
+#include <process.h>
+#include <ctime>
 
-#define NUM_ROWS 50
-#define NUM_COLS 20
-#define NUM_INSTANCES NUM_ROWS * NUM_COLS
+#define WINDOW_WIDTH  1280
+#define WINDOW_HEIGHT 1020
 
+/*static long long GetCurrentTimeMillis()
+{
+    time_t t;
+    time(&t);
+     
+    long long ret = t.wSecond * 1000 + t.wMilliseconds / 1000;
+    return ret;
+}*/
 
-class Tutorial33 : public ICallbacks
+class Tutorial28 : public ICallbacks
 {
 public:
 
-    Tutorial33()
+    Tutorial28()
     {
-        m_pGameCamera = NULL;
-        m_pEffect = NULL;
-        m_scale = 0.0f;
-        m_directionalLight.Color = Vector3f(1.0f, 1.0f, 1.0f);
-        m_directionalLight.AmbientIntensity = 0.55f;
-        m_directionalLight.DiffuseIntensity = 0.9f;
-        m_directionalLight.Direction = Vector3f(1.0f, 0.0, 0.0);
+        m_pLightingTechnique = NULL;        
+        m_pGameCamera = NULL;        
+        m_pGround = NULL;
+        m_pTexture = NULL;
+        m_pNormalMap = NULL;
 
+        m_dirLight.AmbientIntensity = 0.2f;
+        m_dirLight.DiffuseIntensity = 0.8f;
+        m_dirLight.Color = Vector3f(1.0f, 1.0f, 1.0f);
+        m_dirLight.Direction = Vector3f(1.0f, 0.0f, 0.0f);
+        
         m_persProjInfo.FOV = 60.0f;
         m_persProjInfo.Height = WINDOW_HEIGHT;
         m_persProjInfo.Width = WINDOW_WIDTH;
         m_persProjInfo.zNear = 1.0f;
         m_persProjInfo.zFar = 100.0f;  
-        
-        m_pMesh = NULL;
-        m_frameCount = 0;
-        m_fps = 0.0f;
+
+        m_currentTimeMillis = GetCurrentTime();
+    }
+    
+
+    ~Tutorial28()
+    {
+        SAFE_DELETE(m_pLightingTechnique);
+        SAFE_DELETE(m_pGameCamera);        
+        SAFE_DELETE(m_pGround);        
+        SAFE_DELETE(m_pTexture);
+        SAFE_DELETE(m_pNormalMap);
     }
 
-    ~Tutorial33()
-    {
-        SAFE_DELETE(m_pEffect);
-        SAFE_DELETE(m_pGameCamera);
-        SAFE_DELETE(m_pMesh);
-    }    
-
+    
     bool Init()
     {
-        Vector3f Pos(7.0f, 3.0f, 0.0f);
-        Vector3f Target(0.0f, -0.2f, 1.0f);
+        Vector3f Pos(0.0f, 0.4f, -0.5f);
+        Vector3f Target(0.0f, 0.2f, 1.0f);
         Vector3f Up(0.0, 1.0f, 0.0f);
 
         m_pGameCamera = new Camera(WINDOW_WIDTH, WINDOW_HEIGHT, Pos, Target, Up);
-      
-        m_pEffect = new LightingTechnique();
+     
+        m_pLightingTechnique = new LightingTechnique();
 
-        if (!m_pEffect->Init()) {
+        if (!m_pLightingTechnique->Init()) {
             printf("Error initializing the lighting technique\n");
             return false;
         }
 
-        m_pEffect->Enable();
-
-        m_pEffect->SetColorTextureUnit(COLOR_TEXTURE_UNIT_INDEX);
-        m_pEffect->SetDirectionalLight(m_directionalLight);
-        m_pEffect->SetMatSpecularIntensity(0.0f);
-        m_pEffect->SetMatSpecularPower(0);
-        m_pEffect->SetColor(0, Vector4f(1.0f, 0.5f, 0.5f, 0.0f));
-        m_pEffect->SetColor(1, Vector4f(0.5f, 1.0f, 1.0f, 0.0f));
-        m_pEffect->SetColor(2, Vector4f(1.0f, 0.5f, 1.0f, 0.0f));
-        m_pEffect->SetColor(3, Vector4f(1.0f, 1.0f, 1.0f, 0.0f));
-
-        m_pMesh = new Mesh();
-
-        if (!m_pMesh->LoadMesh("../../Content/spider.obj")) {
-            return false;            
-        }
+        m_pLightingTechnique->Enable();
+        m_pLightingTechnique->SetDirectionalLight(m_dirLight);
+        m_pLightingTechnique->SetColorTextureUnit(COLOR_TEXTURE_UNIT_INDEX);
+        m_pLightingTechnique->SetNormalMapTextureUnit(NORMAL_TEXTURE_UNIT_INDEX);
+              
+        m_pGround = new Mesh();
         
-#ifdef FREETYPE
-        if (!m_fontRenderer.InitFontRenderer()) {
+        if (!m_pGround->LoadMesh("../../Content/quad.obj")) {
             return false;
         }
-#endif
+                       
+        m_pTexture = new Texture(GL_TEXTURE_2D, "../../Content/bricks.jpg");
         
-        m_time = glutGet(GLUT_ELAPSED_TIME);
+        if (!m_pTexture->Load()) {
+            return false;
+        }
+        
+        m_pTexture->Bind(COLOR_TEXTURE_UNIT);
 
-        CalcPositions();
+        m_pNormalMap = new Texture(GL_TEXTURE_2D, "../../Content/normal_map.jpg");
         
-        return true;
+        if (!m_pNormalMap->Load()) {
+            return false;
+        }
+        
+        Vector3f ParticleSystemPos = Vector3f(0.0f, 0.0f, 1.0f);
+                        
+        return m_particleSystem.InitParticleSystem(ParticleSystemPos);
     }
 
+    
     void Run()
     {
         GLUTBackendRun(this);
     }
+
     
-
     virtual void RenderSceneCB()
-    {   
-        CalcFPS();
-        
-        m_scale += 0.005f;
-
+    {
+        long long TimeNowMillis = GetCurrentTime();
+        assert(TimeNowMillis >= m_currentTimeMillis);
+        unsigned int DeltaTimeMillis = (unsigned int)(TimeNowMillis - m_currentTimeMillis);
+        m_currentTimeMillis = TimeNowMillis;                
         m_pGameCamera->OnRender();
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        m_pEffect->Enable();
-        m_pEffect->SetEyeWorldPos(m_pGameCamera->GetPos());
-        
-        Pipeline p;
-        p.SetCamera(m_pGameCamera->GetPos(), m_pGameCamera->GetTarget(), m_pGameCamera->GetUp());
-        p.SetPerspectiveProj(m_persProjInfo);   
-        p.Rotate(0.0f, 90.0f, 0.0f);
-        p.Scale(0.005f, 0.005f, 0.005f);                
+        m_pLightingTechnique->Enable();
 
-        Matrix4f WVPMatrics[NUM_INSTANCES];
-        Matrix4f WorldMatrices[NUM_INSTANCES];
+        m_pTexture->Bind(COLOR_TEXTURE_UNIT);       
+        m_pNormalMap->Bind(NORMAL_TEXTURE_UNIT);
+
+        Pipeline p;
+        p.Scale(20.0f, 20.0f, 1.0f);
+        p.Rotate(90.0f, 0.0, 0.0f);
+        p.SetCamera(m_pGameCamera->GetPos(), m_pGameCamera->GetTarget(), m_pGameCamera->GetUp());
+        p.SetPerspectiveProj(m_persProjInfo);
         
-        for (unsigned int i = 0 ; i < NUM_INSTANCES ; i++) {
-            Vector3f Pos(m_positions[i]);
-            Pos.y += sinf(m_scale) * m_velocity[i];
-            p.WorldPos(Pos);        
-            WVPMatrics[i] = p.GetWVPTrans().Transpose();
-            WorldMatrices[i] = p.GetWorldTrans().Transpose();
-        }
+        m_pLightingTechnique->SetWVP(p.GetWVPTrans());
+        m_pLightingTechnique->SetWorldMatrix(p.GetWorldTrans());
         
-        m_pMesh->Render(NUM_INSTANCES, WVPMatrics, WorldMatrices);
+        m_pGround->Render();
         
-        RenderFPS();
+        m_particleSystem.Render(DeltaTimeMillis, p.GetVPTrans(), m_pGameCamera->GetPos());
         
         glutSwapBuffers();
     }
+
 
     virtual void IdleCB()
     {
         RenderSceneCB();
     }
+    
 
     virtual void SpecialKeyboardCB(int Key, int x, int y)
     {
@@ -167,89 +181,38 @@ public:
     {
         m_pGameCamera->OnMouse(x, y);
     }
-    
-    
-    virtual void MouseCB(int Button, int State, int x, int y)
-    {
-    }
 
+ private:
 
-private:
-    
-    void CalcFPS()
-    {
-        m_frameCount++;
-        
-        int time = glutGet( GLUT_ELAPSED_TIME );
-
-        if (time - m_time > 1000) {
-            m_fps = (float)m_frameCount * 1000.0f / (time - m_time);
-            m_time = time;
-            m_frameCount = 0;
-        }
-    }
-    
-    
-    void RenderFPS()
-    {
-        char text[32];
-        SNPRINTF(text, sizeof(text), "FPS: %.2f", m_fps);
-#ifdef FREETYPE
-        m_fontRenderer.RenderText(10, 10, text);        
-#endif
-    }
-    
-    
-    void CalcPositions()
-    {
-        for (unsigned int i = 0; i < NUM_ROWS ; i++) {
-            for (unsigned int j = 0 ; j < NUM_COLS ; j++) {
-                unsigned int Index = i * NUM_COLS + j;
-                m_positions[Index].x = (float)j;
-                m_positions[Index].y = RandomFloat() * 5.0f;
-                m_positions[Index].z = (float)i;
-                m_velocity[Index] = RandomFloat();
-                if (i & 1) {
-                    m_velocity[Index] *= (-1.0f);
-                }
-            }
-        }                   
-    }
-
-    LightingTechnique* m_pEffect;
+    long long m_currentTimeMillis;
+    LightingTechnique* m_pLightingTechnique;
     Camera* m_pGameCamera;
-    float m_scale;
-    DirectionalLight m_directionalLight;
-    Mesh* m_pMesh;
+    DirectionalLight m_dirLight;    
+    Mesh* m_pGround;    
+    Texture* m_pTexture;
+    Texture* m_pNormalMap;
     PersProjInfo m_persProjInfo;
-#ifdef FREETYPE
-    FontRenderer m_fontRenderer;
-#endif
-    int m_time;
-    int m_frameCount;
-    float m_fps;    
-    Vector3f m_positions[NUM_INSTANCES];            
-    float m_velocity[NUM_INSTANCES];
+    ParticleSystem m_particleSystem;
 };
 
 
 int main(int argc, char** argv)
 {
-    Magick::InitializeMagick(*argv);
+    srand(_getpid());
+       
     GLUTBackendInit(argc, argv);
+    Magick::InitializeMagick(nullptr); // <--- added this line
 
-    if (!GLUTBackendCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, 32, false, "Tutorial 33")) {
+    if (!GLUTBackendCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, 32, false, "Tutorial 28")) {
         return 1;
     }
-    
-    SRANDOM;
 
-    Tutorial33* pApp = new Tutorial33();
+    Tutorial28* pApp = new Tutorial28();
 
     if (!pApp->Init()) {
         return 1;
     }
-    
+
     pApp->Run();
 
     delete pApp;
